@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Runs App Router pages + route handlers as Netlify Functions/Edge.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Freeze each day's winner once its 48h window closes (see netlify/functions).
+[functions."lock-launches"]
+  schedule = "@hourly"

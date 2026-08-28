@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.env
+.env.local
+.vercel
+.netlify
+*.log
+.DS_Store
+next-env.d.ts
+
+# pre-existing design-canvas scratch files (not part of the app)
+.thumbnail
+CosmicLaunch.dc.html
+support.js
+_ds/
+uploads/
