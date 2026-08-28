@@ -3,8 +3,16 @@ import PageHeader from "@/components/PageHeader";
 import { getArchive } from "@/lib/data";
 import { humanDate } from "@/lib/date";
 import { money } from "@/lib/money";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Launch archive",
+  description:
+    "Every past launch day on AstroBid — the product that claimed each day, its category, and what it paid.",
+  alternates: { canonical: "/archive" },
+};
 
 export default async function ArchivePage() {
   const { rows, configured } = await getArchive();

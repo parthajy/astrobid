@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
@@ -10,6 +11,58 @@ import type { Launch } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { date: string };
+}): Promise<Metadata> {
+  if (!ISO_RE.test(params.date)) return {};
+  const human = humanDate(params.date);
+  const canonical = `/launch/${params.date}`;
+  const db = getServerClient();
+
+  type MetaRow = {
+    product_name: string | null;
+    tagline: string | null;
+    category: string | null;
+    logo_url: string | null;
+  };
+
+  let launch: MetaRow | null = null;
+  if (db) {
+    const { data } = await db
+      .from("launches")
+      .select("product_name, tagline, category, logo_url")
+      .eq("date", params.date)
+      .maybeSingle<MetaRow>();
+    launch = data;
+  }
+
+  if (launch?.product_name) {
+    const title = `${launch.product_name} — launching ${human}`;
+    const description =
+      launch.tagline ||
+      `${launch.product_name} won the ${human} launch spotlight on AstroBid${
+        launch.category ? ` in ${launch.category}` : ""
+      }.`;
+    const image = launch.logo_url || "/logo.png";
+    return {
+      title,
+      description,
+      alternates: { canonical },
+      openGraph: { type: "article", title, description, url: canonical, images: [image] },
+      twitter: { card: "summary_large_image", title, description, images: [image] },
+    };
+  }
+
+  const insight = getDayInsight(params.date);
+  return {
+    title: `${human} — open for bids`,
+    description: `${insight.headline}: ${insight.reason} Bid now to claim the ${human} launch spotlight on AstroBid.`,
+    alternates: { canonical },
+  };
+}
 
 export default async function LaunchPage({ params }: { params: { date: string } }) {
   if (!ISO_RE.test(params.date)) notFound();

@@ -2,8 +2,16 @@ import PageHeader from "@/components/PageHeader";
 import { getStats } from "@/lib/data";
 import { humanDate, MONTHS } from "@/lib/date";
 import { money as usd } from "@/lib/money";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Stats",
+  description:
+    "Live numbers from AstroBid: total revenue, the ten most expensive launch days, and bidders per month.",
+  alternates: { canonical: "/stats" },
+};
 
 function monthLabel(m: string): string {
   const [y, mm] = m.split("-").map(Number);

@@ -1,9 +1,15 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import EditForm from "./EditForm";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Edit your launch page",
+  robots: { index: false, follow: false },
+};
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
