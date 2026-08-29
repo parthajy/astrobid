@@ -30,13 +30,13 @@ export const metadata: Metadata = {
     url: SITE_URL,
     title: "AstroBid — bid for the best day to launch",
     description: SITE_DESCRIPTION,
-    // og:image comes from app/opengraph-image.tsx (1200×630)
+    images: [{ url: "/OG.jpg", width: 1200, height: 630, alt: "AstroBid — align your stars for your launch day" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "AstroBid — bid for the best day to launch",
     description: SITE_DESCRIPTION,
-    // twitter:image comes from app/twitter-image.tsx
+    images: ["/OG.jpg"],
   },
   robots: {
     index: true,
