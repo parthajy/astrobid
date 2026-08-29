@@ -1,4 +1,4 @@
-export type PaymentMode = "mock" | "pledge" | "dodo" | "razorpay";
+export type PaymentMode = "mock" | "pledge" | "dodo" | "razorpay" | "lemonsqueezy";
 
 export interface CheckoutInput {
   bidId: string;

@@ -8,12 +8,14 @@ import { getDayInsight, signGlyph } from "@/lib/insights";
 import { addMonths, fromISO, MONTHS, toISO, todayISO, WEEKDAYS } from "@/lib/date";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { money } from "@/lib/money";
+import { BASE_MIN_BID } from "@/lib/config";
 import type { PaymentMode } from "@/lib/payments/types";
 
 interface Props {
   date: string;
   supabaseReady: boolean;
   paymentMode: PaymentMode;
+  testMode: boolean;
   maxDateIso: string;
 }
 
@@ -21,6 +23,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CTA_VERB: Record<PaymentMode, string> = {
   dodo: "Pay",
   razorpay: "Pay",
+  lemonsqueezy: "Pay",
   mock: "Confirm",
   pledge: "Pledge",
 };
@@ -80,7 +83,13 @@ function Favicon({ url }: { url: string }) {
   );
 }
 
-export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }: Props) {
+export default function DayView({
+  date,
+  supabaseReady,
+  paymentMode,
+  testMode,
+  maxDateIso,
+}: Props) {
   const d = fromISO(date);
   const insight = getDayInsight(date);
   const isPast = date < todayISO();
@@ -94,7 +103,7 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [tagline, setTagline] = useState("");
-  const [amount, setAmount] = useState<number | "">("");
+  const [amount, setAmount] = useState<number | "">(BASE_MIN_BID);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,10 +117,13 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
       const json = (await res.json()) as DayDetail;
       if (mine === seq.current) {
         setDetail(json);
-        setAmount((p) => (p === "" ? json.minBid : p));
+        setAmount((p) => {
+          const cur = typeof p === "number" ? p : json.minBid;
+          return cur < json.minBid ? json.minBid : cur;
+        });
       }
     } catch {
-      if (mine === seq.current) setError("Could not load this day.");
+      if (mine === seq.current) setError("Couldn't reach the server. Check your connection.");
     } finally {
       if (mine === seq.current) setLoading(false);
     }
@@ -315,16 +327,20 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
         </p>
       )}
 
-      <button
-        className="btn-primary mt-3 w-full"
-        onClick={submit}
-        disabled={submitting || Boolean(validation)}
-      >
+      <button className="btn-primary mt-3 w-full" onClick={submit} disabled={submitting}>
         {submitting
           ? "Redirecting…"
           : `${CTA_VERB[paymentMode]} ${money(Number.isFinite(amountNum) ? amountNum : minBid)} & claim #1`}
       </button>
+      {validation && !error && (
+        <p className="mt-1.5 text-[11px] t-faint">{validation}</p>
+      )}
       <p className="mt-2 text-[11px] t-faint">
+        {testMode && (
+          <span className="mr-1 rounded bg-amber-100 px-1 py-0.5 font-medium text-amber-700">
+            test mode — no real charge
+          </span>
+        )}
         {paymentMode === "pledge"
           ? "Your bid is recorded now; you're invoiced only if you're still #1 when bidding closes. Pledges are binding."
           : "Payment is required to place a bid. If you're outbid, the bid is not refunded."}

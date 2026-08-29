@@ -27,6 +27,7 @@ interface Props {
   maxMonthIso: string;
   supabaseReady: boolean;
   paymentMode: PaymentMode;
+  testMode: boolean;
 }
 
 const PAYMENT_BANNER: Partial<Record<PaymentMode, string>> = {
@@ -42,6 +43,7 @@ export default function CalendarApp({
   maxMonthIso,
   supabaseReady,
   paymentMode,
+  testMode,
 }: Props) {
   const router = useRouter();
   const [days, setDays] = useState<Record<string, DaySummary>>(initialDays);
@@ -186,9 +188,9 @@ export default function CalendarApp({
             <Legend swatch="bg-[#ffe7cf] border border-[#f3b47c]" label="closing" />
             <Legend swatch="bg-[#f1f0f5]" label="past" />
           </span>
-          {PAYMENT_BANNER[paymentMode] && (
+          {(PAYMENT_BANNER[paymentMode] || testMode) && (
             <span className="rounded bg-amber-100 px-1.5 py-0.5 text-amber-700">
-              {PAYMENT_BANNER[paymentMode]}
+              {testMode ? "test mode · no real charge" : PAYMENT_BANNER[paymentMode]}
             </span>
           )}
         </p>
