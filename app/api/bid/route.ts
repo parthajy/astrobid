@@ -6,6 +6,7 @@ import { addDays, biddingOpen, todayISO, toISO } from "@/lib/date";
 import { createCheckout } from "@/lib/payments";
 import { BOOKING_HORIZON_DAYS, originFromRequest } from "@/lib/config";
 import { money } from "@/lib/money";
+import { MODERATION_BLOCK_MESSAGE, screenListing } from "@/lib/moderation";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid category" }, { status: 400 });
   if (!Number.isInteger(amount) || amount <= 0)
     return NextResponse.json({ error: "bid must be a positive whole number" }, { status: 400 });
+
+  if (screenListing(productName, tagline, url, name)) {
+    return NextResponse.json({ error: MODERATION_BLOCK_MESSAGE }, { status: 422 });
+  }
 
   const detail = await getDayDetail(date);
   if (amount < detail.minBid)

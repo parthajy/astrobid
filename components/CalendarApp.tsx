@@ -175,6 +175,9 @@ export default function CalendarApp({
           <Link href="/archive" className="t-muted hover:underline">
             Archive
           </Link>
+          <Link href="/moderation" className="t-muted hover:underline">
+            Policy
+          </Link>
         </nav>
 
         <p className="order-4 flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-tight t-muted sm:text-xs">

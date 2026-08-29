@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient, hasServiceRole } from "@/lib/supabase/server";
 import { isValidCategory } from "@/lib/categories";
+import { MODERATION_BLOCK_MESSAGE, screenListing } from "@/lib/moderation";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,17 @@ export async function POST(req: Request) {
     if (!isValidCategory(body.category))
       return NextResponse.json({ error: "bad category" }, { status: 400 });
     patch.category = body.category;
+  }
+
+  if (
+    screenListing(
+      patch.product_name as string,
+      patch.tagline as string,
+      patch.description as string,
+      patch.url as string,
+    )
+  ) {
+    return NextResponse.json({ error: MODERATION_BLOCK_MESSAGE }, { status: 422 });
   }
 
   const { error } = await admin.from("launches").update(patch).eq("id", launch.id);

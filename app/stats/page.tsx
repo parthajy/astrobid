@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { getStats } from "@/lib/data";
 import { humanDate, MONTHS } from "@/lib/date";
 import { money as usd } from "@/lib/money";
@@ -103,6 +104,7 @@ export default async function StatsPage() {
           </div>
         </section>
       </div>
+      <SiteFooter />
     </main>
   );
 }

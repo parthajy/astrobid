@@ -108,6 +108,17 @@ body {
   .surface-alt { background-color: var(--surface-alt); }
 }
 
+/* Legal / policy prose */
+.legal { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.legal h2 { color: var(--ink); font-size: 1.05rem; font-weight: 700; margin: 1.75rem 0 0.5rem; }
+.legal h3 { color: var(--ink); font-size: 0.95rem; font-weight: 600; margin: 1.25rem 0 0.4rem; }
+.legal p { margin: 0.6rem 0; }
+.legal ul { list-style: disc; padding-left: 1.25rem; margin: 0.6rem 0; }
+.legal li { margin: 0.3rem 0; }
+.legal a { color: var(--accent); text-decoration: underline; }
+.legal strong { color: var(--ink); }
+.legal hr { border: 0; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #cfc8ea transparent;

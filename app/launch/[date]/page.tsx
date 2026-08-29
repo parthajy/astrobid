@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { getServerClient } from "@/lib/supabase/server";
 import { biddingOpen, humanDate } from "@/lib/date";
 import { getDayInsight } from "@/lib/insights";
@@ -177,6 +178,7 @@ export default async function LaunchPage({ params }: { params: { date: string } 
           </Link>
         </p>
       </div>
+      <SiteFooter />
     </main>
   );
 }

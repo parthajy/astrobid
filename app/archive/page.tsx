@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { getArchive } from "@/lib/data";
 import { humanDate } from "@/lib/date";
 import { money } from "@/lib/money";
@@ -67,6 +68,7 @@ export default async function ArchivePage() {
           ))}
         </div>
       </div>
+      <SiteFooter />
     </main>
   );
 }
