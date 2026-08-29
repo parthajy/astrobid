@@ -61,7 +61,7 @@ export default function SuccessClient() {
   if (error) {
     return (
       <Shell>
-        <p className="text-rose-200">{error}</p>
+        <p className="text-rose-600">{error}</p>
         <Link href="/" className="btn-ghost mt-4">
           Back to calendar
         </Link>
@@ -72,7 +72,7 @@ export default function SuccessClient() {
   if (!info) {
     return (
       <Shell>
-        <p className="text-white/50">Confirming your payment…</p>
+        <p className="t-muted">Confirming your payment…</p>
       </Shell>
     );
   }
@@ -90,25 +90,25 @@ export default function SuccessClient() {
             : "Bid placed"}
       </h1>
 
-      <p className="mt-2 text-sm text-white/60">
-        <span className="font-semibold text-white">{info.bid.product_name}</span> ·{" "}
+      <p className="mt-2 text-sm t-muted">
+        <span className="font-semibold t-ink">{info.bid.product_name}</span> ·{" "}
         {info.bid.category}
         <br />
         {humanDate(info.bid.launch_date)} · your bid{" "}
-        <span className="font-bold text-violet-200">{money(info.bid.amount)}</span>
+        <span className="font-bold t-accent">{money(info.bid.amount)}</span>
       </p>
 
       {paid && !info.isWinner && (
-        <p className="mt-3 rounded-lg border border-cosmos-border bg-black/30 px-3 py-2 text-xs text-white/60">
+        <p className="mt-3 rounded-lg border border-cosmos-border surface-alt px-3 py-2 text-xs t-muted">
           You&apos;ve been outbid — current leader is at {money(info.leadingAmount)}. Head back and
           raise your bid. (Bids are not refunded.)
         </p>
       )}
 
       {paid && info.isWinner && !info.locked && (
-        <p className="mt-3 text-xs text-white/50">
-          You&apos;ll keep the spot as long as no one outbids you before bidding closes (48h before
-          the day). We emailed your launch-page link too.
+        <p className="mt-3 text-xs t-muted">
+          You&apos;ll keep the spot as long as no one outbids you before bidding closes (24h before
+          the day). Your launch-page link is on this page.
         </p>
       )}
 

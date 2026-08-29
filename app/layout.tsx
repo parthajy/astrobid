@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#05030f",
+  themeColor: "#f7f5fb",
   width: "device-width",
   initialScale: 1,
 };
@@ -65,7 +65,7 @@ const websiteJsonLd = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="starfield">
+      <body>
         <div className="relative z-10">{children}</div>
 
         <Script

@@ -4,7 +4,7 @@ import { getDayDetail } from "@/lib/data";
 import { isValidCategory } from "@/lib/categories";
 import { addDays, biddingOpen, todayISO, toISO } from "@/lib/date";
 import { createCheckout } from "@/lib/payments";
-import { BOOKING_HORIZON_DAYS } from "@/lib/config";
+import { BOOKING_HORIZON_DAYS, originFromRequest } from "@/lib/config";
 import { money } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
@@ -90,6 +90,7 @@ export async function POST(req: Request) {
       name: name || "",
       launchDate: date,
       productName,
+      origin: originFromRequest(req),
     });
     return NextResponse.json({
       bidId: bid.id,

@@ -27,7 +27,7 @@ export async function createRazorpayCheckout(input: CheckoutInput): Promise<Chec
     },
     notify: { email: true, sms: false },
     reminder_enable: false,
-    callback_url: `${appUrl()}/success?bid=${input.bidId}`,
+    callback_url: `${input.origin || appUrl()}/success?bid=${input.bidId}`,
     callback_method: "get",
     notes: {
       bid_id: input.bidId,

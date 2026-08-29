@@ -56,17 +56,33 @@ export function humanDate(iso: string): string {
   return `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
-/** Bidding closes 48h before 00:00 local on the launch day. */
+/** Hours before 00:00 local on the launch day that bidding closes. */
+export const CLOSE_LEAD_HOURS = 24;
+
+/** Bidding closes CLOSE_LEAD_HOURS before 00:00 local on the launch day. */
 export function closesAt(iso: string): Date {
-  return addDays(fromISO(iso), -2);
+  const d = fromISO(iso);
+  d.setHours(d.getHours() - CLOSE_LEAD_HOURS);
+  return d;
 }
 
 export function biddingOpen(iso: string, now = new Date()): boolean {
   return now.getTime() < closesAt(iso).getTime();
 }
 
+/** Hours until bidding closes for `iso` (negative once closed). */
+export function hoursUntilClose(iso: string, now = new Date()): number {
+  return (closesAt(iso).getTime() - now.getTime()) / 3600000;
+}
+
 export function daysBetween(aIso: string, bIso: string): number {
   const a = fromISO(aIso).getTime();
   const b = fromISO(bIso).getTime();
   return Math.round((b - a) / 86400000);
+}
+
+/** Sun-based week key ("YYYY-MM-DD" of that week's Sunday) for grouping days. */
+export function weekKey(iso: string): string {
+  const d = fromISO(iso);
+  return toISO(addDays(d, -d.getDay()));
 }

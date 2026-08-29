@@ -18,7 +18,7 @@ export default function EditLaunchPage({ params }: { params: { date: string } })
   return (
     <main className="min-h-[100dvh] pb-16">
       <PageHeader />
-      <Suspense fallback={<div className="p-8 text-center text-white/40">Loading…</div>}>
+      <Suspense fallback={<div className="p-8 text-center t-faint">Loading…</div>}>
         <EditForm date={params.date} />
       </Suspense>
     </main>

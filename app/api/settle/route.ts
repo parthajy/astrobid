@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient, hasServiceRole } from "@/lib/supabase/server";
 import { finalizeBidPaid } from "@/lib/finalize";
-import { appUrl } from "@/lib/config";
 import { paymentMode } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +14,9 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const bidId = searchParams.get("bid");
-  const mode = searchParams.get("mode") === "pledge" ? "pledge" : "mock";
+  const mode = searchParams.get("mode") === "mock" ? "mock" : "pledge";
+
+  const back = (qs: string) => NextResponse.redirect(new URL(`/success?${qs}`, req.url));
 
   if (paymentMode() !== mode) {
     return NextResponse.json(
@@ -31,7 +32,8 @@ export async function GET(req: Request) {
   const result = await finalizeBidPaid(getAdminClient(), bidId, `${mode}_${Date.now()}`, {
     recordPayment: mode === "mock",
   });
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 500 });
-
-  return NextResponse.redirect(`${appUrl()}/success?bid=${bidId}&${mode}=1`, { status: 302 });
+  if (!result.ok) {
+    return back(`bid=${bidId}&error=1`);
+  }
+  return back(`bid=${bidId}&${mode}=1`);
 }

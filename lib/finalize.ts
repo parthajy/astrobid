@@ -44,13 +44,14 @@ export async function finalizeBidPaid(
 
   const nowIso = new Date().toISOString();
 
-  await admin
+  const { error: bidUpdErr } = await admin
     .from("bids")
     .update({ status: "paid", paid_at: nowIso, dodo_payment_id: paymentId })
     .eq("id", bidId);
+  if (bidUpdErr) console.error("finalize: mark bid paid failed", bidUpdErr);
 
   // Upsert the bidder as a user (email is the natural key).
-  const { data: user } = await admin
+  const { data: user, error: userErr } = await admin
     .from("users")
     .upsert(
       { email: bid.bidder_email, name: bid.bidder_name },
@@ -58,6 +59,7 @@ export async function finalizeBidPaid(
     )
     .select("id")
     .single();
+  if (userErr) console.error("finalize: upsert user failed", userErr);
 
   // Record the payment (skipped for "pledge" mode, where no money changed hands).
   if (recordPayment) {
@@ -82,41 +84,40 @@ export async function finalizeBidPaid(
     .maybeSingle<Bid>();
 
   const winner = topBid ?? { ...bid, status: "paid" as const };
+  const winnerIsThisBid = winner.id === bid.id;
 
-  const { data: existing } = await admin
+  const { data: existing, error: existingErr } = await admin
     .from("launches")
-    .select("id, locked")
+    .select("id, locked, winner_id")
     .eq("date", bid.launch_date)
     .maybeSingle();
+  if (existingErr) console.error("finalize: read launch failed", existingErr);
+
+  const snapshot = {
+    product_name: winner.product_name,
+    url: winner.url,
+    category: winner.category,
+    tagline: winner.tagline,
+    bid_amount: winner.amount,
+    winner_bid_id: winner.id,
+    claimed_at: nowIso,
+    updated_at: nowIso,
+  };
 
   if (!existing) {
-    await admin.from("launches").insert({
-      date: bid.launch_date,
-      product_name: winner.product_name,
-      url: winner.url,
-      category: winner.category,
-      tagline: winner.tagline,
-      bid_amount: winner.amount,
-      winner_bid_id: winner.id,
-      winner_id: user?.id ?? null,
-      claimed_at: nowIso,
-      updated_at: nowIso,
-    });
+    const { error } = await admin
+      .from("launches")
+      .insert({ date: bid.launch_date, ...snapshot, winner_id: user?.id ?? null });
+    if (error) console.error("finalize: insert launch failed", error);
   } else if (!existing.locked) {
-    await admin
+    const { error } = await admin
       .from("launches")
       .update({
-        product_name: winner.product_name,
-        url: winner.url,
-        category: winner.category,
-        tagline: winner.tagline,
-        bid_amount: winner.amount,
-        winner_bid_id: winner.id,
-        winner_id: winner.id === bid.id ? user?.id ?? null : undefined,
-        claimed_at: nowIso,
-        updated_at: nowIso,
+        ...snapshot,
+        winner_id: winnerIsThisBid ? user?.id ?? null : existing.winner_id ?? null,
       })
       .eq("id", existing.id);
+    if (error) console.error("finalize: update launch failed", error);
   }
 
   return {
@@ -126,7 +127,7 @@ export async function finalizeBidPaid(
   };
 }
 
-/** Lock every launch whose bidding window (48h out) has closed. */
+/** Lock every launch whose bidding window (24h out) has closed. */
 export async function lockClosedLaunches(admin: SupabaseClient): Promise<number> {
   const { data: rows } = await admin
     .from("launches")

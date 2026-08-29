@@ -12,6 +12,22 @@ export function appUrl(): string {
   return (explicit || vercel || netlify || "http://localhost:3000").replace(/\/$/, "");
 }
 
+/**
+ * Origin of the actual incoming request — the source of truth for redirect and
+ * return URLs, so payment flows work even if NEXT_PUBLIC_APP_URL was baked wrong.
+ */
+export function originFromRequest(req: Request): string {
+  const h = req.headers;
+  const proto = h.get("x-forwarded-proto")?.split(",")[0] || "https";
+  const host = h.get("x-forwarded-host") || h.get("host");
+  if (host) return `${proto}://${host}`;
+  try {
+    return new URL(req.url).origin;
+  } catch {
+    return appUrl();
+  }
+}
+
 export function supabaseBrowserConfigured(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

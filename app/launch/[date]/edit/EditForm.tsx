@@ -78,7 +78,7 @@ export default function EditForm({ date }: { date: string }) {
   if (!token) {
     return (
       <Wrap>
-        <p className="text-rose-200">
+        <p className="text-rose-600">
           This page needs your private edit link (with <code>?token=…</code>). Check the
           confirmation you got after paying.
         </p>
@@ -89,15 +89,15 @@ export default function EditForm({ date }: { date: string }) {
   return (
     <Wrap>
       <h1 className="text-2xl font-extrabold glow">Your launch page</h1>
-      <p className="mt-1 text-sm text-white/50">
+      <p className="mt-1 text-sm t-muted">
         {humanDate(date)} · edits go live immediately at{" "}
-        <Link href={`/launch/${date}`} className="text-violet-300 hover:text-white">
+        <Link href={`/launch/${date}`} className="t-accent hover:underline">
           /launch/{date}
         </Link>
       </p>
 
       {!loaded ? (
-        <p className="mt-6 text-white/40">Loading…</p>
+        <p className="mt-6 t-faint">Loading…</p>
       ) : (
         <div className="mt-6 space-y-3">
           <Field label="Product name">
@@ -140,8 +140,8 @@ export default function EditForm({ date }: { date: string }) {
             <p
               className={
                 msg.kind === "ok"
-                  ? "rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200"
-                  : "rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200"
+                  ? "rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700"
+                  : "rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-600"
               }
             >
               {msg.text}
@@ -169,7 +169,7 @@ function Wrap({ children }: { children: React.ReactNode }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-violet-200/70">{label}</span>
+      <span className="mb-1 block text-xs font-medium t-accent">{label}</span>
       {children}
     </label>
   );

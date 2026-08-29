@@ -7,6 +7,8 @@ export interface CheckoutInput {
   name: string;
   launchDate: string;
   productName: string;
+  /** Absolute origin of the incoming request, e.g. https://astrobid.lol */
+  origin?: string;
 }
 
 export interface CheckoutResult {

@@ -32,7 +32,7 @@ export async function createDodoCheckout(input: CheckoutInput): Promise<Checkout
         amount: Math.round(input.amount * CURRENCY_MINOR),
       },
     ],
-    return_url: `${appUrl()}/success?bid=${input.bidId}`,
+    return_url: `${input.origin || appUrl()}/success?bid=${input.bidId}`,
     metadata: {
       bid_id: input.bidId,
       launch_date: input.launchDate,

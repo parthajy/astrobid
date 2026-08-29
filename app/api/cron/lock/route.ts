@@ -5,7 +5,7 @@ import { lockClosedLaunches } from "@/lib/finalize";
 export const dynamic = "force-dynamic";
 
 /**
- * Locks every launch whose 48h bidding window has closed, freezing the winner.
+ * Locks every launch whose 24h bidding window has closed, freezing the winner.
  * Wired to Vercel Cron (see vercel.json). Protect with CRON_SECRET if set.
  */
 export async function GET(req: Request) {

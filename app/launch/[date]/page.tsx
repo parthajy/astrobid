@@ -92,7 +92,7 @@ export default async function LaunchPage({ params }: { params: { date: string } 
     <main className="min-h-[100dvh] pb-16">
       <PageHeader />
       <div className="mx-auto max-w-2xl px-4">
-        <div className="text-xs uppercase tracking-widest text-violet-200/50">
+        <div className="text-xs uppercase tracking-widest t-accent">
           {humanDate(date)} · {insight.headline} {"⭐".repeat(insight.score)}
         </div>
 
@@ -100,8 +100,8 @@ export default async function LaunchPage({ params }: { params: { date: string } 
           <div className="panel mt-4 px-6 py-10 text-center">
             <div className="text-4xl">✦</div>
             <h1 className="mt-3 text-xl font-extrabold glow">This day is still open</h1>
-            <p className="mt-2 text-sm text-white/55">{insight.reason}</p>
-            <Link href="/" className="btn-primary mt-5">
+            <p className="mt-2 text-sm t-muted">{insight.reason}</p>
+            <Link href={`/day/${date}`} className="btn-primary mt-5">
               Bid for {humanDate(date).split(",")[1]}
             </Link>
           </div>
@@ -113,26 +113,26 @@ export default async function LaunchPage({ params }: { params: { date: string } 
                 <img
                   src={launch!.logo_url || "/logo.png"}
                   alt={launch!.product_name || "logo"}
-                  className="h-16 w-16 rounded-2xl border border-cosmos-border bg-black/40 object-cover"
+                  className="h-16 w-16 rounded-2xl border border-cosmos-border surface-alt object-cover"
                 />
                 <div className="min-w-0">
                   <h1 className="truncate text-2xl font-extrabold glow">{launch!.product_name}</h1>
-                  <p className="text-sm text-white/60">{launch!.tagline || "Launching soon."}</p>
+                  <p className="text-sm t-muted">{launch!.tagline || "Launching soon."}</p>
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
                 <span className="chip">{launch!.category || "Other"}</span>
                 <span className="chip">
                   Won this day for{" "}
-                  <span className="ml-1 font-extrabold text-violet-200">
+                  <span className="ml-1 font-extrabold t-accent">
                     {money(launch!.bid_amount)}
                   </span>
                 </span>
                 <span className="chip">{bidders} paid bid{bidders === 1 ? "" : "s"}</span>
                 {launch!.locked ? (
-                  <span className="chip !text-emerald-300">winner locked</span>
+                  <span className="chip !text-emerald-700">winner locked</span>
                 ) : open ? (
-                  <span className="chip !text-amber-300">bidding still open</span>
+                  <span className="chip !text-amber-700">bidding still open</span>
                 ) : (
                   <span className="chip">closing</span>
                 )}
@@ -141,11 +141,11 @@ export default async function LaunchPage({ params }: { params: { date: string } 
 
             <div className="px-6 py-6">
               {launch!.description ? (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/75">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed t-ink">
                   {launch!.description}
                 </p>
               ) : (
-                <p className="text-sm text-white/40">
+                <p className="text-sm t-faint">
                   The maker hasn&apos;t added launch details yet.
                 </p>
               )}
@@ -162,7 +162,7 @@ export default async function LaunchPage({ params }: { params: { date: string } 
                   </a>
                 )}
                 {open && !launch!.locked && (
-                  <Link href="/" className="btn-ghost">
+                  <Link href={`/day/${date}`} className="btn-ghost">
                     Outbid this
                   </Link>
                 )}
@@ -171,8 +171,8 @@ export default async function LaunchPage({ params }: { params: { date: string } 
           </article>
         )}
 
-        <p className="mt-6 text-center text-xs text-white/30">
-          <Link href="/" className="hover:text-white">
+        <p className="mt-6 text-center text-xs t-faint">
+          <Link href="/" className="hover:underline">
             ← Back to the AstroBid calendar
           </Link>
         </p>

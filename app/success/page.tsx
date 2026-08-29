@@ -14,7 +14,7 @@ export default function SuccessPage() {
   return (
     <main className="min-h-[100dvh]">
       <PageHeader />
-      <Suspense fallback={<div className="p-8 text-center text-white/40">Loading…</div>}>
+      <Suspense fallback={<div className="p-8 text-center t-faint">Loading…</div>}>
         <SuccessClient />
       </Suspense>
     </main>

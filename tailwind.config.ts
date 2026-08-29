@@ -10,36 +10,36 @@ const config: Config = {
     extend: {
       colors: {
         cosmos: {
-          bg: "#05030f",
-          panel: "#0d0a20",
-          card: "#141133",
-          border: "#2a2258",
-          violet: "#8b5cf6",
+          bg: "#f7f5fb",
+          panel: "#ffffff",
+          card: "#ffffff",
+          surface: "#f3f1fb",
+          border: "#e7e3f4",
+          violet: "#7c3aed",
           indigo: "#6366f1",
-          star: "#fde68a",
-          glow: "#a78bfa",
+          star: "#d97706",
+          glow: "#7c3aed",
+          gold: "#d97706",
+          ink: "#171528",
+          muted: "#6c6880",
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        glow: "0 0 20px rgba(167,139,250,0.35), 0 0 60px rgba(99,102,241,0.15)",
+        glow: "0 6px 20px rgba(124,58,237,0.22)",
+        card: "0 1px 3px rgba(23,21,40,0.06), 0 1px 2px rgba(23,21,40,0.04)",
       },
       keyframes: {
         twinkle: {
-          "0%, 100%": { opacity: "0.2" },
+          "0%, 100%": { opacity: "0.35" },
           "50%": { opacity: "1" },
-        },
-        floaty: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-4px)" },
         },
       },
       animation: {
         twinkle: "twinkle 3s ease-in-out infinite",
-        floaty: "floaty 6s ease-in-out infinite",
       },
     },
   },
