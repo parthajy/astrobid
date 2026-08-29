@@ -17,8 +17,8 @@ export default function SiteFooter() {
         <Link href="/refunds" className="hover:underline">
           Refunds
         </Link>
-        <a href="mailto:support@astrobid.lol" className="hover:underline">
-          support@astrobid.lol
+        <a href="mailto:pbdomains01@gmail.com" className="hover:underline">
+          pbdomains01@gmail.com
         </a>
       </div>
     </footer>

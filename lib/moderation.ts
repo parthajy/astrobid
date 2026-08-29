@@ -53,4 +53,4 @@ export function screenListing(...parts: (string | null | undefined)[]): string |
 }
 
 export const MODERATION_BLOCK_MESSAGE =
-  "This listing was blocked by our content policy (see /moderation). If you believe this is a mistake, email moderation@astrobid.lol.";
+  "This listing was blocked by our content policy (see /moderation). If you believe this is a mistake, email pbdomains01@gmail.com.";

@@ -98,7 +98,7 @@ export default function ModerationPolicy() {
       <h3>c. Reports</h3>
       <p>
         Anyone can report a listing by emailing{" "}
-        <a href="mailto:moderation@astrobid.lol">moderation@astrobid.lol</a> with the launch date and
+        <a href="mailto:pbdomains01@gmail.com">pbdomains01@gmail.com</a> with the launch date and
         product name. We aim to review reports within 2 business days, and faster for safety issues.
       </p>
 
@@ -119,7 +119,7 @@ export default function ModerationPolicy() {
       <h2>5. Intellectual-property complaints</h2>
       <p>
         If you believe a listing infringes your copyright or trademark, email{" "}
-        <a href="mailto:moderation@astrobid.lol">moderation@astrobid.lol</a> with your contact
+        <a href="mailto:pbdomains01@gmail.com">pbdomains01@gmail.com</a> with your contact
         details, identification of the protected work, the infringing listing (date, product name,
         and URL), and a good-faith statement that the use is unauthorised. We remove verified
         infringing listings promptly and notify the bidder.
@@ -132,15 +132,10 @@ export default function ModerationPolicy() {
       </p>
 
       <h2>7. Contact</h2>
-      <ul>
-        <li>
-          Moderation, reports, and takedowns:{" "}
-          <a href="mailto:moderation@astrobid.lol">moderation@astrobid.lol</a>
-        </li>
-        <li>
-          General and billing: <a href="mailto:support@astrobid.lol">support@astrobid.lol</a>
-        </li>
-      </ul>
+      <p>
+        Moderation, reports, takedowns, and billing:{" "}
+        <a href="mailto:pbdomains01@gmail.com">pbdomains01@gmail.com</a>
+      </p>
     </LegalLayout>
   );
 }

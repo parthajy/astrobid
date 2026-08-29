@@ -49,7 +49,7 @@ export default function Refunds() {
         <li>a charge you can show was not authorised by you.</li>
       </ul>
       <p>
-        Email <a href="mailto:support@astrobid.lol">support@astrobid.lol</a> within 14 days of the
+        Email <a href="mailto:pbdomains01@gmail.com">pbdomains01@gmail.com</a> within 14 days of the
         charge with your receipt and the launch date. We respond within 3 business days; approved
         refunds are issued within 5&ndash;10 business days depending on your bank and our payment
         processor.

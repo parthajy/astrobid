@@ -74,7 +74,7 @@ export default function Terms() {
       </p>
 
       <h2>7. Governing law</h2>
-      <p>These terms are governed by the laws of India. Contact: <a href="mailto:support@astrobid.lol">support@astrobid.lol</a>.</p>
+      <p>These terms are governed by the laws of India. Contact: <a href="mailto:pbdomains01@gmail.com">pbdomains01@gmail.com</a>.</p>
     </LegalLayout>
   );
 }

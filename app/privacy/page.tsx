@@ -55,14 +55,14 @@ export default function Privacy() {
         Listing and bid records are kept as long as the calendar entry is public and as needed for
         accounting and dispute resolution. You can ask us to remove your email address and any
         non-winning listing text by emailing{" "}
-        <a href="mailto:support@astrobid.lol">support@astrobid.lol</a>. Records tied to a completed
+        <a href="mailto:pbdomains01@gmail.com">pbdomains01@gmail.com</a>. Records tied to a completed
         payment are retained where law requires.
       </p>
 
       <h2>Your rights</h2>
       <p>
         Depending on where you live, you may have rights to access, correct, or delete your personal
-        data. Email <a href="mailto:support@astrobid.lol">support@astrobid.lol</a> and we will
+        data. Email <a href="mailto:pbdomains01@gmail.com">pbdomains01@gmail.com</a> and we will
         respond within 30 days.
       </p>
 
