@@ -15,9 +15,8 @@ import {
   startOfMonth,
   toISO,
   todayISO,
-  weekKey,
 } from "@/lib/date";
-import { getDayInsight, signGlyph } from "@/lib/insights";
+import { getDayInsight, isBestDayOfWeek, signGlyph } from "@/lib/insights";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { moneyCompact as money } from "@/lib/money";
 import type { PaymentMode } from "@/lib/payments/types";
@@ -35,9 +34,6 @@ const PAYMENT_BANNER: Partial<Record<PaymentMode, string>> = {
   pledge: "pledge mode · no card charged yet",
 };
 
-// Tue / Wed / Thu are the strongest launch days; used only to break score ties.
-const WEEKDAY_PRIORITY = [6, 3, 0, 1, 2, 4, 5]; // Sun..Sat
-
 type DayState = "past" | "urgent" | "golden" | "open";
 
 export default function CalendarApp({
@@ -50,7 +46,9 @@ export default function CalendarApp({
   const router = useRouter();
   const [days, setDays] = useState<Record<string, DaySummary>>(initialDays);
   const [view, setView] = useState<Date>(() => startOfMonth(fromISO(startMonthIso)));
-  const [hover, setHover] = useState<{ iso: string; x: number; y: number } | null>(null);
+  const [hover, setHover] = useState<
+    { iso: string; x: number; top: number; bottom: number } | null
+  >(null);
 
   const today = todayISO();
   const minMonth = startOfMonth(fromISO(startMonthIso));
@@ -110,38 +108,10 @@ export default function CalendarApp({
 
   const grid = useMemo(() => monthGrid(view), [view]);
 
-  // The 3 best-scoring biddable days in each visible week.
-  const golden = useMemo(() => {
-    const byWeek: Record<string, { iso: string; score: number; wd: number }[]> = {};
-    for (const d of grid) {
-      const iso = toISO(d);
-      if (iso < today) continue;
-      if (hoursUntilClose(iso) <= 24) continue; // urgent / closed days don't count
-      (byWeek[weekKey(iso)] ||= []).push({
-        iso,
-        score: getDayInsight(iso).score,
-        wd: d.getDay(),
-      });
-    }
-    const set = new Set<string>();
-    for (const wk of Object.keys(byWeek)) {
-      byWeek[wk]
-        .sort(
-          (a, b) =>
-            b.score - a.score ||
-            WEEKDAY_PRIORITY[a.wd] - WEEKDAY_PRIORITY[b.wd] ||
-            a.iso.localeCompare(b.iso),
-        )
-        .slice(0, 3)
-        .forEach((r) => set.add(r.iso));
-    }
-    return set;
-  }, [grid, today]);
-
   const stateOf = (iso: string): DayState => {
     if (iso < today) return "past";
     if (hoursUntilClose(iso) <= 24) return "urgent";
-    if (golden.has(iso)) return "golden";
+    if (isBestDayOfWeek(iso)) return "golden"; // always 3 gold days per week
     return "open";
   };
 
@@ -212,8 +182,8 @@ export default function CalendarApp({
           </span>
           <span className="hidden items-center gap-3 sm:flex">
             <Legend swatch="bg-white border border-cosmos-border" label="open" />
-            <Legend swatch="bg-[#fdf3e0] border border-[#f0cd8b]" label="best days" />
-            <Legend swatch="bg-[#fff4e6] border border-[#f6c58a]" label="closing" />
+            <Legend swatch="bg-[#f6e0a0] border border-[#d9b14a]" label="best days ★★★★★" />
+            <Legend swatch="bg-[#ffe7cf] border border-[#f3b47c]" label="closing" />
             <Legend swatch="bg-[#f1f0f5]" label="past" />
           </span>
           {PAYMENT_BANNER[paymentMode] && (
@@ -254,9 +224,9 @@ export default function CalendarApp({
               s === "past"
                 ? "bg-[#f1f0f5] border border-transparent"
                 : s === "urgent"
-                  ? "bg-[#fff4e6] border border-[#f6c58a]"
+                  ? "bg-[#ffe7cf] border border-[#f3b47c]"
                   : s === "golden"
-                    ? "bg-[#fdf3e0] border border-[#f0cd8b]"
+                    ? "bg-[#f6e0a0] border border-[#d9b14a] shadow-[inset_0_0_0_1px_rgba(217,177,74,0.35)]"
                     : "bg-white border border-cosmos-border";
 
             return (
@@ -266,7 +236,7 @@ export default function CalendarApp({
                 onClick={() => openDay(iso, s, hasProduct)}
                 onMouseEnter={(e) => {
                   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                  setHover({ iso, x: r.left + r.width / 2, y: r.top });
+                  setHover({ iso, x: r.left + r.width / 2, top: r.top, bottom: r.bottom });
                 }}
                 onMouseLeave={() => setHover((h) => (h?.iso === iso ? null : h))}
                 className={[
@@ -286,7 +256,9 @@ export default function CalendarApp({
                   >
                     {d.getDate()}
                   </span>
-                  {s === "golden" && <span className="text-[9px] sm:text-[10px]">✦</span>}
+                  {s === "golden" && (
+                    <span className="text-[10px] text-[#8a5a06] sm:text-xs">★</span>
+                  )}
                   {s === "urgent" && <span className="text-[9px] sm:text-[10px]">⏳</span>}
                   {summary?.locked && s !== "past" && <span className="text-[9px]">🔒</span>}
                 </div>
@@ -295,12 +267,18 @@ export default function CalendarApp({
                   <div
                     className={[
                       "mt-0.5 truncate text-[9px] leading-none sm:text-[11px]",
-                      s === "open" ? "text-[#e0a92e]" : "text-[#d97706]",
+                      s === "golden"
+                        ? "text-[#8a5a06]"
+                        : s === "urgent"
+                          ? "text-[#c2740b]"
+                          : "text-[#e6b053]",
                     ].join(" ")}
                     aria-label={`${insight.score} of 5 launch stars`}
                   >
                     {"★".repeat(insight.score)}
-                    <span className="text-[#d9d5e6]">{"★".repeat(5 - insight.score)}</span>
+                    <span className={s === "golden" ? "text-[#cbb37a]" : "text-[#d9d5e6]"}>
+                      {"★".repeat(5 - insight.score)}
+                    </span>
                   </div>
                 )}
 
@@ -335,7 +313,9 @@ export default function CalendarApp({
         </div>
       </div>
 
-      {hover && <HoverCard iso={hover.iso} x={hover.x} y={hover.y} />}
+      {hover && (
+        <HoverCard iso={hover.iso} x={hover.x} top={hover.top} bottom={hover.bottom} />
+      )}
     </div>
   );
 }
@@ -349,19 +329,32 @@ function Legend({ swatch, label }: { swatch: string; label: string }) {
   );
 }
 
-function HoverCard({ iso, x, y }: { iso: string; x: number; y: number }) {
+function HoverCard({
+  iso,
+  x,
+  top,
+  bottom,
+}: {
+  iso: string;
+  x: number;
+  top: number;
+  bottom: number;
+}) {
   const insight = getDayInsight(iso);
   const d = fromISO(iso);
   const open = biddingOpen(iso);
   const width = 272;
-  const left = Math.max(
-    12,
-    Math.min(x - width / 2, (typeof window !== "undefined" ? window.innerWidth : 1000) - width - 12),
-  );
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1000;
+  const left = Math.max(12, Math.min(x - width / 2, vw - width - 12));
+  // Not enough room above the cell → drop the card below it instead.
+  const placeBelow = top < 260;
+  const style = placeBelow
+    ? { left, top: bottom + 8 }
+    : { left, top: top - 8, transform: "translateY(-100%)" };
   return (
     <div
-      className="pointer-events-none fixed z-50 hidden w-[272px] -translate-y-full rounded-xl border border-cosmos-border bg-white p-3 shadow-card md:block"
-      style={{ left, top: y - 8 }}
+      className="pointer-events-none fixed z-50 hidden w-[272px] rounded-xl border border-cosmos-border bg-white p-3 shadow-card md:block"
+      style={style}
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold t-muted">

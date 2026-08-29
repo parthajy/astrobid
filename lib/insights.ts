@@ -1,4 +1,4 @@
-import { fromISO } from "./date";
+import { addDays, fromISO, toISO } from "./date";
 
 // Deterministic cosmic guidance for a given day — no AI, no live ephemeris.
 // Moon phase and Sun sign are computed from real cycles; the "planetary weather"
@@ -177,7 +177,7 @@ const PLANETS: { tag: string; phrase: string; delta: number }[] = [
 
 /* ------------------------------ Assemble ----------------------------- */
 
-export function getDayInsight(iso: string): DayInsight {
+function computeRaw(iso: string): DayInsight {
   const d = fromISO(iso);
   const h = hash(iso);
 
@@ -222,6 +222,39 @@ export function getDayInsight(iso: string): DayInsight {
     luckySigns: trine,
     signAdvice,
   };
+}
+
+/* ---------------------- Best days of the week ----------------------- */
+
+/** The 7 ISO dates of the Sunday-based week that `iso` falls in. */
+function weekDays(iso: string): string[] {
+  const d = fromISO(iso);
+  const sunday = addDays(d, -d.getDay());
+  return Array.from({ length: 7 }, (_, i) => toISO(addDays(sunday, i)));
+}
+
+/**
+ * True for the three strongest launch windows in `iso`'s week — always exactly
+ * three days per week, so the calendar always has gold "best days" to aim at.
+ * Ranking is by raw cosmic score with a deterministic hash tie-break.
+ */
+export function isBestDayOfWeek(iso: string): boolean {
+  const ranked = weekDays(iso)
+    .map((w) => ({ w, s: computeRaw(w).score, h: hash(w) }))
+    .sort((a, b) => b.s - a.s || a.h - b.h);
+  return ranked.slice(0, 3).some((r) => r.w === iso);
+}
+
+export function getDayInsight(iso: string): DayInsight {
+  const base = computeRaw(iso);
+  if (isBestDayOfWeek(iso)) {
+    base.score = 5;
+    if (!base.tags.includes("Best day this week")) {
+      base.tags = ["Best day this week", ...base.tags].slice(0, 4);
+    }
+    base.reason = `One of this week's three strongest launch windows. ${base.reason}`;
+  }
+  return base;
 }
 
 export function starRow(score: number): { filled: string; empty: string } {
