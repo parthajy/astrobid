@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { DayDetail } from "@/lib/types";
 import { CATEGORIES } from "@/lib/categories";
-import { getDayInsight } from "@/lib/insights";
-import { addMonths, fromISO, humanDate, MONTHS, toISO, todayISO, WEEKDAYS } from "@/lib/date";
+import { getDayInsight, signGlyph } from "@/lib/insights";
+import { addMonths, fromISO, MONTHS, toISO, todayISO, WEEKDAYS } from "@/lib/date";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { money } from "@/lib/money";
 import type { PaymentMode } from "@/lib/payments/types";
@@ -18,7 +18,6 @@ interface Props {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const CTA_VERB: Record<PaymentMode, string> = {
   dodo: "Pay",
   razorpay: "Pay",
@@ -39,8 +38,7 @@ function fmtCountdown(ms: number): string {
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "just now";
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
+  const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
   if (m < 1) return "just now";
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
@@ -61,6 +59,27 @@ function shortHuman(iso: string): string {
   return `${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}`;
 }
 
+function Favicon({ url }: { url: string }) {
+  const [bad, setBad] = useState(false);
+  const dom = domainOf(url);
+  if (!dom || bad) {
+    return (
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg surface-alt text-sm">
+        🚀
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${dom}&sz=64`}
+      alt=""
+      onError={() => setBad(true)}
+      className="h-9 w-9 shrink-0 rounded-lg border border-cosmos-border bg-white object-contain p-1"
+    />
+  );
+}
+
 export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }: Props) {
   const d = fromISO(date);
   const insight = getDayInsight(date);
@@ -71,7 +90,6 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
   const [now, setNow] = useState(() => Date.now());
 
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [productName, setProductName] = useState("");
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -80,7 +98,9 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const nameRef = useRef<HTMLInputElement>(null);
   const seq = useRef(0);
+
   async function load() {
     const mine = ++seq.current;
     try {
@@ -160,9 +180,26 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
     return null;
   })();
 
+  const bump = (n: number) =>
+    setAmount((p) => Math.max(minBid, (typeof p === "number" ? p : minBid) + n));
+
+  function focusForm() {
+    document.getElementById("bid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => nameRef.current?.focus(), 300);
+  }
+
+  function outbidRow(rowAmount: number) {
+    setAmount(rowAmount + 1);
+    focusForm();
+  }
+
   async function submit() {
     setError(null);
-    if (validation) return setError(validation);
+    if (validation) {
+      setError(validation);
+      focusForm();
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/bid", {
@@ -171,7 +208,6 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
         body: JSON.stringify({
           date,
           email: email.trim(),
-          name: name.trim(),
           productName: productName.trim(),
           url: url.trim(),
           category,
@@ -192,12 +228,113 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
     }
   }
 
-  const bump = (n: number) =>
-    setAmount((p) => Math.max(minBid, (typeof p === "number" ? p : minBid) + n));
+  const claimCard = (
+    <section id="bid" className="panel p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-lg font-extrabold t-ink sm:text-xl">
+          Claim <span className="t-accent">#1</span> for
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Lower bid"
+            onClick={() => bump(-1)}
+            className="btn-ghost h-9 w-9 !px-0 text-lg"
+          >
+            −
+          </button>
+          <div className="min-w-[4.5rem] text-center text-2xl font-extrabold t-accent">
+            {money(Number.isFinite(amountNum) ? amountNum : minBid)}
+          </div>
+          <button
+            type="button"
+            aria-label="Raise bid"
+            onClick={() => bump(1)}
+            className="btn-ghost h-9 w-9 !px-0 text-lg"
+          >
+            +
+          </button>
+        </div>
+      </div>
+      <div className="mt-1 text-xs t-faint">
+        Minimum {money(minBid)}
+        {leader ? ` · beat ${leader.product_name} at ${money(leader.amount)}` : " · no bids yet"}
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <input
+          ref={nameRef}
+          className="field"
+          placeholder="Product name *"
+          value={productName}
+          maxLength={80}
+          onChange={(e) => setProductName(e.target.value)}
+        />
+        <input
+          className="field"
+          placeholder="https://your-product.com"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+        <select className="field" value={category} onChange={(e) => setCategory(e.target.value)}>
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <input
+          className="field"
+          type="email"
+          inputMode="email"
+          placeholder="you@startup.com *"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className="field"
+          placeholder="Tagline (shown on your launch page)"
+          value={tagline}
+          maxLength={120}
+          onChange={(e) => setTagline(e.target.value)}
+        />
+        <input
+          className="field"
+          type="number"
+          min={minBid}
+          step={1}
+          placeholder={`Bid amount (min ${minBid})`}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value === "" ? "" : Math.floor(Number(e.target.value)))}
+        />
+      </div>
+
+      {error && (
+        <p className="mt-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-600">
+          {error}
+        </p>
+      )}
+
+      <button
+        className="btn-primary mt-3 w-full"
+        onClick={submit}
+        disabled={submitting || Boolean(validation)}
+      >
+        {submitting
+          ? "Redirecting…"
+          : `${CTA_VERB[paymentMode]} ${money(Number.isFinite(amountNum) ? amountNum : minBid)} & claim #1`}
+      </button>
+      <p className="mt-2 text-[11px] t-faint">
+        {paymentMode === "pledge"
+          ? "Your bid is recorded now; you're invoiced only if you're still #1 when bidding closes. Pledges are binding."
+          : "Payment is required to place a bid. If you're outbid, the bid is not refunded."}
+      </p>
+    </section>
+  );
 
   return (
-    <main className="min-h-[100dvh] pb-24">
-      <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
+    <main className="min-h-[100dvh] pb-28 lg:pb-10">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-3 py-4 sm:px-4">
         <Link href="/" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="AstroBid" className="h-8 w-8" />
@@ -208,237 +345,161 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
         </Link>
       </header>
 
-      <div className="mx-auto max-w-3xl px-4">
-        {/* Date + insight */}
-        <div className="text-xs uppercase tracking-widest t-muted">
-          {WEEKDAYS[d.getDay()]} · launch spotlight
-        </div>
-        <h1 className="mt-0.5 text-2xl font-extrabold t-ink sm:text-3xl">
-          {MONTHS[d.getMonth()]} {d.getDate()}, {d.getFullYear()}
-        </h1>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="text-[#d97706]">
-            {"★".repeat(insight.score)}
-            <span className="text-[#d9d5e6]">{"★".repeat(5 - insight.score)}</span>
-          </span>
-          <span className="text-sm font-semibold t-accent">{insight.headline}</span>
-        </div>
-        <p className="mt-1 max-w-xl text-sm t-muted">
-          {insight.reason} <span className="t-faint">— that&apos;s the alignment we score every day on.</span>
-        </p>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {insight.tags.map((t) => (
-            <span key={t} className="chip !text-[10px]">
-              {t}
+      <div className="mx-auto max-w-6xl px-3 sm:px-4">
+        {/* Cosmic strip */}
+        <section className="pb-3">
+          <div className="text-[11px] uppercase tracking-widest t-muted">
+            {WEEKDAYS[d.getDay()]} · launch spotlight
+          </div>
+          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-xl font-extrabold t-ink sm:text-2xl">
+              {MONTHS[d.getMonth()]} {d.getDate()}, {d.getFullYear()}
+            </h1>
+            <span className="text-[#d97706]">
+              {"★".repeat(insight.score)}
+              <span className="text-[#d9d5e6]">{"★".repeat(5 - insight.score)}</span>
             </span>
-          ))}
-        </div>
-        <p className="mt-3 text-sm t-muted">
-          {open ? (
-            <>
-              Bidding closes in{" "}
-              <span className="font-bold t-ink">{detail ? fmtCountdown(closesMs) : "…"}</span> · the
-              leader then wins the calendar spotlight and a launch page.
-            </>
-          ) : (
-            <>Bidding is closed. The #1 bid holds the spotlight.</>
-          )}
-        </p>
-
-        {/* Claim card */}
-        {open && (
-          <section className="panel mt-6 p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="text-xl font-extrabold t-ink sm:text-2xl">
-                Claim <span className="t-accent">#1</span> for
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label="Lower bid"
-                  onClick={() => bump(-1)}
-                  className="btn-ghost h-9 w-9 !px-0 text-lg"
-                >
-                  −
-                </button>
-                <div className="min-w-[5rem] text-center text-2xl font-extrabold t-accent sm:text-3xl">
-                  {money(Number.isFinite(amountNum) ? amountNum : minBid)}
-                </div>
-                <button
-                  type="button"
-                  aria-label="Raise bid"
-                  onClick={() => bump(1)}
-                  className="btn-ghost h-9 w-9 !px-0 text-lg"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <div className="mt-1 text-xs t-faint">
-              Minimum {money(minBid)}
-              {leader ? ` · beat ${leader.product_name} (${money(leader.amount)})` : " · no bids yet"}
-            </div>
-
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <input
-                className="field"
-                placeholder="Product name *"
-                value={productName}
-                maxLength={80}
-                onChange={(e) => setProductName(e.target.value)}
-              />
-              <input
-                className="field"
-                placeholder="https://your-product.com"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
-              <select className="field" value={category} onChange={(e) => setCategory(e.target.value)}>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="field"
-                type="email"
-                inputMode="email"
-                placeholder="you@startup.com *"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              <input
-                className="field"
-                placeholder="Tagline (shown on your launch page)"
-                value={tagline}
-                maxLength={120}
-                onChange={(e) => setTagline(e.target.value)}
-              />
-              <input
-                className="field"
-                type="number"
-                min={minBid}
-                step={1}
-                placeholder={`Bid amount (min ${minBid})`}
-                value={amount}
-                onChange={(e) =>
-                  setAmount(e.target.value === "" ? "" : Math.floor(Number(e.target.value)))
-                }
-              />
-            </div>
-
-            {error && (
-              <p className="mt-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-600">
-                {error}
-              </p>
-            )}
-
-            <button
-              className="btn-primary mt-3 w-full sm:w-auto"
-              onClick={submit}
-              disabled={submitting || Boolean(validation)}
-            >
-              {submitting
-                ? "Redirecting…"
-                : `${CTA_VERB[paymentMode]} ${money(
-                    Number.isFinite(amountNum) ? amountNum : minBid,
-                  )} & claim #1`}
-            </button>
-            <p className="mt-2 text-[11px] t-faint">
-              {paymentMode === "pledge"
-                ? "Your bid is recorded now; you're invoiced only if you're still #1 when bidding closes. Pledges are binding."
-                : "Payment is required to place a bid. If you're outbid, the bid is not refunded."}
-            </p>
-          </section>
-        )}
-
-        {otherDates.length > 0 && (
-          <p className="mt-4 text-xs t-muted">
-            Book ahead:{" "}
-            {otherDates.map((o, i) => (
-              <span key={o}>
-                {i > 0 && " · "}
-                <Link href={`/day/${o}`} className="t-accent hover:underline">
-                  {shortHuman(o)}
-                </Link>
+            <span className="text-sm font-semibold t-accent">
+              {insight.moonEmoji} {insight.headline}
+            </span>
+          </div>
+          <p className="mt-1 max-w-2xl text-sm t-muted">{insight.reason}</p>
+          <p className="mt-1 text-xs">
+            <span className="t-accent">✷ </span>
+            <span className="t-muted">{insight.signAdvice}</span>
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {insight.tags.map((t) => (
+              <span key={t} className="chip !text-[10px]">
+                {t}
               </span>
             ))}
-          </p>
-        )}
-
-        {/* Leaderboard */}
-        <section className="mt-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest t-muted">Leaderboard</h2>
-            <span className="text-xs t-faint">{bids.length} paid bid{bids.length === 1 ? "" : "s"}</span>
           </div>
+          <p className="mt-2 text-xs t-muted">
+            {open ? (
+              <>
+                Bidding closes in{" "}
+                <span className="font-bold t-ink">{detail ? fmtCountdown(closesMs) : "…"}</span> — the
+                leader then wins the calendar spotlight and a launch page.
+              </>
+            ) : (
+              <>Bidding is closed. The #1 bid holds the spotlight.</>
+            )}
+          </p>
+        </section>
 
-          <div className="mt-3 space-y-2">
-            {loading && <p className="text-sm t-faint">Loading…</p>}
-            {!loading && bids.length === 0 && (
-              <p className="rounded-xl border border-dashed border-cosmos-border p-4 text-sm t-faint">
-                No paid bids yet — {open ? "claim this day first." : "nobody claimed this day."}
+        {/* Split: leaderboard first on mobile, bid panel sticky-left on desktop */}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <div className="order-2 lg:order-1 lg:sticky lg:top-4">
+            {open ? (
+              claimCard
+            ) : (
+              <section className="panel p-5 text-sm t-muted">
+                Bidding for this day is closed.{" "}
+                {leader && (
+                  <>
+                    <span className="t-accent">{leader.product_name}</span> holds #1 at{" "}
+                    {money(leader.amount)}.
+                  </>
+                )}
+                <div className="mt-3">
+                  <Link href={`/launch/${date}`} className="btn-ghost">
+                    View the launch page
+                  </Link>
+                </div>
+              </section>
+            )}
+
+            {otherDates.length > 0 && (
+              <p className="mt-3 text-xs t-muted">
+                Book ahead:{" "}
+                {otherDates.map((o, i) => (
+                  <span key={o}>
+                    {i > 0 && " · "}
+                    <Link href={`/day/${o}`} className="t-accent hover:underline">
+                      {shortHuman(o)}
+                    </Link>
+                  </span>
+                ))}
               </p>
             )}
-            {bids.map((b, i) => {
-              const dom = domainOf(b.url || "");
-              return (
-                <div
-                  key={b.id}
-                  className={[
-                    "flex items-center gap-3 rounded-xl border p-3",
-                    i === 0 ? "border-cosmos-violet bg-[#f4efff]" : "border-cosmos-border bg-white",
-                  ].join(" ")}
-                >
-                  <span
-                    className={[
-                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                      i === 0 ? "bg-cosmos-violet text-white" : "surface-alt t-muted",
-                    ].join(" ")}
-                  >
-                    {i + 1}
-                  </span>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg surface-alt text-sm">
-                    🚀
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold t-ink">
-                      {b.url ? (
-                        <a
-                          href={b.url}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="hover:underline"
-                        >
-                          {b.product_name}
-                        </a>
-                      ) : (
-                        b.product_name
-                      )}
-                      {b.tagline && <span className="font-normal t-muted"> · {b.tagline}</span>}
-                    </div>
-                    <div className="truncate text-[11px] t-faint">
-                      {b.category} · {timeAgo(b.paid_at || b.created_at)}
-                      {dom && ` · ${dom}`}
-                    </div>
-                  </div>
-                  <span className="shrink-0 text-sm font-extrabold t-accent">{money(b.amount)}</span>
-                </div>
-              );
-            })}
           </div>
 
-          {leader && (
-            <p className="mt-3 text-xs t-faint">
-              Current #1: <span className="t-accent">{leader.product_name}</span> at{" "}
-              {money(leader.amount)}.{" "}
-              {open && <>Outbid it from {money(minBid)}.</>}
-            </p>
-          )}
-        </section>
+          <div className="order-1 lg:order-2">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-widest t-muted">Leaderboard</h2>
+              <span className="text-xs t-faint">
+                {bids.length} paid bid{bids.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {loading && <p className="text-sm t-faint">Loading…</p>}
+              {!loading && bids.length === 0 && (
+                <p className="rounded-xl border border-dashed border-cosmos-border p-5 text-sm t-faint">
+                  No paid bids yet — {open ? "claim this day first." : "nobody claimed this day."}
+                </p>
+              )}
+              {bids.map((b, i) => {
+                const dom = domainOf(b.url || "");
+                return (
+                  <div
+                    key={b.id}
+                    className={[
+                      "group flex items-center gap-3 rounded-xl border p-3",
+                      i === 0 ? "border-cosmos-violet bg-[#f4efff]" : "border-cosmos-border bg-white",
+                    ].join(" ")}
+                  >
+                    <span
+                      className={[
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                        i === 0 ? "bg-cosmos-violet text-white" : "surface-alt t-muted",
+                      ].join(" ")}
+                    >
+                      {i + 1}
+                    </span>
+                    <Favicon url={b.url || ""} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold t-ink">
+                        {b.url ? (
+                          <a href={b.url} target="_blank" rel="noreferrer noopener" className="hover:underline">
+                            {b.product_name}
+                          </a>
+                        ) : (
+                          b.product_name
+                        )}
+                        {b.tagline && <span className="font-normal t-muted"> — {b.tagline}</span>}
+                      </div>
+                      <div className="truncate text-[11px] t-faint">
+                        {b.category} · {timeAgo(b.paid_at || b.created_at)}
+                        {dom && ` · ${dom}`}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-extrabold t-accent">{money(b.amount)}</div>
+                      {open && (
+                        <button
+                          type="button"
+                          onClick={() => outbidRow(b.amount)}
+                          className="text-[10px] t-faint hover:t-accent"
+                        >
+                          outbid ↑
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {leader && open && (
+              <p className="mt-3 text-xs t-faint">
+                Take #1 from <span className="t-accent">{leader.product_name}</span> for{" "}
+                {money(leader.amount + 1)} or more.
+              </p>
+            )}
+          </div>
+        </div>
 
         <p className="mt-10 text-center text-xs t-faint">
           <Link href="/" className="hover:underline">
@@ -446,6 +507,40 @@ export default function DayView({ date, supabaseReady, paymentMode, maxDateIso }
           </Link>
         </p>
       </div>
+
+      {/* Mobile sticky bid bar — bid stays reachable while scrolling the leaderboard */}
+      {open && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-cosmos-border bg-white/95 px-3 py-2 backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-6xl items-center gap-2">
+            <button
+              type="button"
+              aria-label="Lower bid"
+              onClick={() => bump(-1)}
+              className="btn-ghost h-9 w-9 !px-0 text-lg"
+            >
+              −
+            </button>
+            <div className="min-w-[3.5rem] text-center text-lg font-extrabold t-accent">
+              {money(Number.isFinite(amountNum) ? amountNum : minBid)}
+            </div>
+            <button
+              type="button"
+              aria-label="Raise bid"
+              onClick={() => bump(1)}
+              className="btn-ghost h-9 w-9 !px-0 text-lg"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => (validation ? focusForm() : submit())}
+              className="btn-primary flex-1"
+            >
+              {submitting ? "…" : `${CTA_VERB[paymentMode]} & claim #1`}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

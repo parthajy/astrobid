@@ -17,7 +17,7 @@ import {
   todayISO,
   weekKey,
 } from "@/lib/date";
-import { getDayInsight } from "@/lib/insights";
+import { getDayInsight, signGlyph } from "@/lib/insights";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { moneyCompact as money } from "@/lib/money";
 import type { PaymentMode } from "@/lib/payments/types";
@@ -372,8 +372,16 @@ function HoverCard({ iso, x, y }: { iso: string; x: number; y: number }) {
           <span className="text-[#d9d5e6]">{"★".repeat(5 - insight.score)}</span>
         </span>
       </div>
-      <div className="mt-1 text-sm font-bold t-accent">{insight.headline}</div>
+      <div className="mt-1 text-sm font-bold t-accent">
+        {insight.moonEmoji} {insight.headline}
+      </div>
       <p className="mt-1 text-xs leading-snug t-muted">{insight.reason}</p>
+      <p className="mt-1.5 text-[11px] leading-snug">
+        <span className="t-accent">✷ Best for: </span>
+        <span className="t-muted">
+          {insight.luckySigns.map((s) => `${signGlyph(s)} ${s}`).join("  ")}
+        </span>
+      </p>
       <div className="mt-2 flex flex-wrap gap-1">
         {insight.tags.map((t) => (
           <span key={t} className="chip !text-[10px]">

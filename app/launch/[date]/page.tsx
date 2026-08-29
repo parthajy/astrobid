@@ -93,7 +93,7 @@ export default async function LaunchPage({ params }: { params: { date: string } 
       <PageHeader />
       <div className="mx-auto max-w-2xl px-4">
         <div className="text-xs uppercase tracking-widest t-accent">
-          {humanDate(date)} · {insight.headline} {"⭐".repeat(insight.score)}
+          {humanDate(date)} · {insight.moonEmoji} {insight.headline} {"★".repeat(insight.score)}
         </div>
 
         {!claimed ? (
